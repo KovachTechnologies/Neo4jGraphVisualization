@@ -1,11 +1,17 @@
 {
-	"default" : "#D6DFEA",
-	"labels" : {
-		"Application" 	: "#4B0B0B",
-		"Database"	: "#040071"
-	},
-	"property" : {
-		"DEGRADED"	: "#D20103",
-		"RESPONSIVE"	: "#37A40C"
-	}
+    "default" : "#D6DFEA",
+    "labels" : {
+        "Application" 	: "#FFD700",
+        "Database"	: "#1E90FF"
+    },
+    "property" : {
+        "status" : {
+            "DEGRADED"	: "#D20103",
+            "RESPONSIVE"	: "#37A40C"
+        }
+    },
+    "input_properties" : [
+        "name",
+        "status"
+    ]
 }
