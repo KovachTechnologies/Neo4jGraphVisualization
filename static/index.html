@@ -29,14 +29,18 @@
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         #query-input {
-            width: 400px;
+            flex-grow: 1;
             padding: 10px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
             font-size: 14px;
-            margin-right: 10px;
             transition: border-color 0.2s;
         }
         #query-input:focus {
@@ -57,26 +61,84 @@
         #query-form button:hover {
             background: #2563eb;
         }
-        .main-content {
+        #toggle-left-sidebar {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
             display: flex;
-            gap: 20px;
+            align-items: center;
+        }
+        #toggle-left-sidebar svg {
+            width: 24px;
+            height: 24px;
+            fill: #1a3c6d;
+            transition: fill 0.2s;
+        }
+        #toggle-left-sidebar:hover svg {
+            fill: #3b82f6;
+        }
+        .main-content {
+            position: relative;
+            width: 100%;
+            height: 600px;
+        }
+        #left-sidebar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 25%;
+            height: 100%;
+            background: linear-gradient(180deg, #ffffff, #f9fafb);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            transition: width 0.3s ease, padding 0.3s ease;
+            z-index: 1;
+        }
+        #left-sidebar.collapsed {
+            width: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #left-sidebar h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 15px;
+            color: #1a3c6d;
+        }
+        #left-sidebar button {
+            width: 100%;
+            padding: 10px;
+            background: #6b7280;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 15px;
+        }
+        #left-sidebar button:hover {
+            background: #4b5563;
         }
         #graph {
-            width: 70%;
-            height: 600px;
+            width: 100%;
+            height: 100%;
             background: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            z-index: 0;
         }
         .node circle {
             stroke: #fff;
             stroke-width: 1.5;
             transition: transform 0.2s, filter 0.2s;
+            cursor: move;
         }
-        .node circle.degraded { fill: #ef4444; }
-        .node circle.responsive { fill: #22c55e; }
-        .node circle.default { fill: #06b6d4; }
         .node circle:hover {
             transform: scale(1.2);
             filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.3));
@@ -108,16 +170,22 @@
             white-space: pre-wrap;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             transition: opacity 0.2s;
+            z-index: 2;
         }
         #sidebar {
+            position: absolute;
+            top: 0;
+            right: 0;
             width: 25%;
-            height: 600px;
+            height: 100%;
             background: linear-gradient(180deg, #ffffff, #f9fafb);
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 15px;
+            box-sizing: border-box;
             overflow-y: auto;
             transition: width 0.3s ease, padding 0.3s ease;
+            z-index: 1;
         }
         #sidebar.collapsed {
             width: 0;
@@ -165,11 +233,21 @@
     <div class="container">
         <h1>Neo4j Graph Visualizer</h1>
         <form id="query-form">
-            <label for="query-input">Cypher Query:</label><br>
+            <button id="toggle-left-sidebar" title="Toggle Query Builder">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                </svg>
+            </button>
+            <label for="query-input">Cypher Query:</label>
             <input type="text" id="query-input" value="MATCH r=(n:Application)-->(m:Application) RETURN r LIMIT 25">
             <button type="submit">Run Query</button>
         </form>
         <div class="main-content">
+            <div id="left-sidebar" class="collapsed">
+                <button id="close-left-sidebar">Close</button>
+                <h3>Query Builder</h3>
+                <p>Placeholder for Query Builder tool</p>
+            </div>
             <div id="graph"></div>
             <div id="sidebar" class="collapsed">
                 <button id="close-sidebar">Close</button>
@@ -181,16 +259,16 @@
     <div class="tooltip" id="tooltip"></div>
 
     <script>
-        const width = 800, height = 600;
+        let width = 800, height = 600;
 
         // Set up SVG canvas
         const svg = d3.select("#graph")
             .append("svg")
-            .attr("width", width)
             .attr("height", height);
 
-        // Set up tooltip and sidebar
+        // Set up tooltip and sidebars
         const tooltip = d3.select("#tooltip");
+        const leftSidebar = d3.select("#left-sidebar");
         const sidebar = d3.select("#sidebar");
         const nodeProperties = d3.select("#node-properties");
 
@@ -200,10 +278,51 @@
             .force("charge", d3.forceManyBody().strength(-200))
             .force("center", d3.forceCenter(width / 2, height / 2));
 
-        // Handle close button
+        // Update SVG width dynamically
+        function updateSvgWidth() {
+            const mainContent = document.querySelector(".main-content");
+            width = mainContent.offsetWidth;
+            svg.attr("width", width);
+            simulation.force("center", d3.forceCenter(width / 2, height / 2));
+            simulation.alpha(1).restart();
+            console.log("Graph width:", width);
+        }
+
+        // Handle sidebar buttons
         d3.select("#close-sidebar").on("click", () => {
             sidebar.classed("collapsed", true);
         });
+
+        d3.select("#close-left-sidebar").on("click", () => {
+            leftSidebar.classed("collapsed", true);
+        });
+
+        d3.select("#toggle-left-sidebar").on("click", (event) => {
+            event.preventDefault();
+            const isCollapsed = leftSidebar.classed("collapsed");
+            console.log("Toggling left sidebar, was collapsed:", isCollapsed);
+            leftSidebar.classed("collapsed", !isCollapsed);
+        });
+
+        // Handle window resize
+        window.addEventListener("resize", updateSvgWidth);
+
+        // Drag functions
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            // Optionally, keep the node fixed: d.fx = d.x; d.fy = d.y;
+        }
 
         // Handle form submission
         document.getElementById("query-form").addEventListener("submit", async (e) => {
@@ -226,6 +345,7 @@
             // Clear previous graph
             svg.selectAll("*").remove();
             sidebar.classed("collapsed", true);
+            leftSidebar.classed("collapsed", true);
 
             // Draw graph
             const links = svg.append("g")
@@ -238,15 +358,15 @@
                 .selectAll("g")
                 .data(data.nodes)
                 .enter().append("g")
-                .attr("class", "node");
+                .attr("class", "node")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
 
             nodes.append("circle")
                 .attr("r", 5)
-                .attr("class", d => {
-                    if (d.properties.status === "DEGRADED") return "degraded";
-                    if (d.properties.status === "RESPONSIVE") return "responsive";
-                    return "default";
-                })
+                .attr("fill", d => d.color)
                 .on("mouseover", function(event, d) {
                     const props = Object.entries(d.properties)
                         .map(([key, value]) => `${key}: ${value}`)
@@ -290,8 +410,12 @@
                 });
 
             simulation.force("link").links(data.links);
+            updateSvgWidth();
             simulation.alpha(1).restart();
         });
+
+        // Initial width setup
+        updateSvgWidth();
     </script>
 </body>
 </html>
