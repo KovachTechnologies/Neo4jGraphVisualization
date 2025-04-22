@@ -1,51 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Neo4j Graph Visualizer</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="https://d3js.org/d3.v7.min.js" defer></script>
+    <script src="/static/scripts.js" defer></script>
+  </head>
+  <body>
     <div class="container">
-        <h1>Neo4j Graph Visualizer</h1>
-        <form id="query-form">
-            <button id="toggle-left-sidebar" title="Toggle Query Builder">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
-                </svg>
-            </button>
-            <label for="query-input">Cypher Query:</label>
-            <input type="text" id="query-input" value="MATCH r=(n)-->(m) RETURN r LIMIT 25">
-            <button type="submit">Run Query</button>
-        </form>
-        <div class="main-content">
-            <div id="left-sidebar" class="collapsed">
-                <button id="close-left-sidebar">Close</button>
-                <h3>Query Builder</h3>
-                <form id="query-builder-form">
-                    <h4>Labels</h4>
-                    <div id="label-list"></div>
-                    <h4>Properties</h4>
-                    <div id="property-list"></div>
-                    <div class="limit-row">
-                        <label for="limit-input">Limit:</label>
-                        <input type="number" id="limit-input" value="25" min="1">
-                    </div>
-                    <button type="submit">Generate Query</button>
-                </form>
-            </div>
-            <div id="graph"></div>
-            <div id="sidebar" class="collapsed">
-                <button id="close-sidebar">Close</button>
-                <h3>Node Properties</h3>
-                <ul id="node-properties"></ul>
-            </div>
-        </div>
-    </div>
-    <div class="tooltip" id="tooltip"></div>
+      <h1>Neo4j Graph Visualizer</h1>
 
-    <script src="/static/scripts.js"></script>
-</body>
+      <!-- Query Form -->
+      <form id="query-form" aria-label="Cypher query form">
+        <button
+          id="toggle-left-sidebar"
+          type="button"
+          title="Toggle Query Builder"
+          aria-label="Toggle query builder sidebar"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"
+            />
+          </svg>
+        </button>
+        <label for="query-input">Cypher Query:</label>
+        <input
+          type="text"
+          id="query-input"
+          value="MATCH r=(n)-->(m) RETURN r LIMIT 25"
+          aria-label="Cypher query input"
+        />
+        <button type="submit">Run Query</button>
+      </form>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Left Sidebar (Query Builder) -->
+        <aside id="left-sidebar" class="collapsed" aria-label="Query builder">
+          <button id="close-left-sidebar" type="button">Close</button>
+          <h3>Query Builder</h3>
+          <form id="query-builder-form" aria-label="Query builder form">
+            <h4>Labels</h4>
+            <div id="label-list"></div>
+            <h4>Properties</h4>
+            <div id="property-list"></div>
+            <div class="limit-row">
+              <label for="limit-input">Limit:</label>
+              <input
+                type="number"
+                id="limit-input"
+                value="25"
+                min="1"
+                aria-label="Query result limit"
+              />
+            </div>
+            <button type="submit">Generate Query</button>
+          </form>
+        </aside>
+
+        <!-- Graph Canvas -->
+        <div id="graph" aria-label="Graph visualization"></div>
+
+        <!-- Right Sidebar (Node Properties) -->
+        <aside id="sidebar" class="collapsed" aria-label="Node properties">
+          <button id="close-sidebar" type="button">Close</button>
+          <h3>Node Properties</h3>
+          <ul id="node-properties"></ul>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip" aria-live="polite"></div>
+  </body>
 </html>
