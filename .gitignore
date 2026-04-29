@@ -94,3 +94,4 @@ idea/
 
 txt/
 cp.sh
+*.DS_Store
